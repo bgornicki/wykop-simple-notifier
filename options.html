@@ -1,0 +1,79 @@
+<html>
+	<meta charset="UTF-8">
+	<head>
+		<title>Wykop Simple Notifier</title>
+    
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+
+    <script src="scripts/jquery-3.2.1.slim.min.js"></script>
+    <script src="scripts/popper.min.js"></script>
+		<script src="scripts/bootstrap.min.js"></script>
+
+	</head>
+	<body>
+    <div class="jumbotron">
+      <div class="container">
+        <h1 class="display-3">Wykop Simple Notifier</h1>
+        <p class="lead">Dodatek, który pozwolić być Ci na bieżąco z powiadomieniami na wykopie. Nie musisz się nigdzie rejestrować, instalować dodatkowych rzeczy ani kombinować z kluczami API. Wykop Simple Notifier to proste rozszerzenie, które robi to co trzeba.</p>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-8">
+          <h2>Ustawienia</h2>
+          <p>Dodatek, mimo swojej prostoty, umożliwia zmianę kilku podstawowych funkcjonalności. </p>
+
+    			<form id="settings">
+    			  <div class="form-group">
+      	      <div class="checkbox">
+                  <label data-toggle="tooltip" data-placement="left" title="Oprócz zmiany ikony, odtwórz także dźwięk powiadomienia" ><input type="checkbox" id="soundsEnabled"> Dźwięk powiadomienia</label>
+              </div>
+
+              <div class="checkbox">
+                  <label data-toggle="tooltip" data-placement="left" title="Domyślnie dźwięk odtwarzany jest dla każdego nowego powiadomienia. Zaznacz tę opcję, jeśli chcesz słyszeć dźwięk tylko przy pierwszym nowym powiadomieniu na wykopie" ><input type="checkbox" id="soundsOnlyFirst" > Dźwięk tylko dla pierwszego powiadomienia</label>
+              </div>
+
+               <div class="checkbox">
+                  <label data-toggle="tooltip" data-placement="left" title="Zliczaj także powiadomienia z tagów, nie same zawołania" ><input type="checkbox" id="shouldCountHashtags" > Pokazuj powiadomienia z tagów</label>
+              </div>
+
+              <div class="checkbox">
+                  <label data-toggle="tooltip" data-placement="left" title="Zaznacz, jeśli chcesz przechodzić na stronę z powiadomieniami po kliknięciu ikony (domyślnie otwiera się strona główna wykopu)" ><input type="checkbox" id="openMentionsPage" > Po kliknięciu ikony otwórz stronę z listą powiadomień</label>
+              </div>
+
+              <div class="checkbox">
+                  <label data-toggle="tooltip" data-placement="left" title="In Elon We Trust" ><input type="checkbox" id="elonizm" > Elonizm ( ͡° ͜ʖ ͡°)</label>
+              </div>
+              
+              <div style="width: 100%; margin-top: 15px;""></div>
+              
+              <label for="interval"  data-toggle="tooltip" data-placement="left" title="Jeśli masz wolniejszy internet (lub limity), możesz sprawdzać powiadomienia rzadziej. Każde sprawdzenie to załadowanie całej strony wykop.pl" >Interwał (w sekundach) pomiędzy sprawdzaniem powiadomień:</label>
+              <div class="col-md-2">
+                <input class="form-control" id="interval" type="number" min="1" max="3600">
+              </div>
+
+      				<button id="save" type="button" class="btn btn-info" style="margin-top: 15px">
+      					Zapisz ustawienia
+      				</button>
+
+              <span style="margin-left: 10px; margin-top: 15px" class="text-success" id="status"></span>
+
+    			  </div>
+    			</form>
+        </div>
+        <div class="col-md-4">
+          <h2>O mnie</h2>
+          <p class="text-justify">Czasami robię takie różne, dziwne rzeczy, np. ten dodatek. Robię też inne aplikacje, czy elektronikę. Dla Ciebie też mogę jakąś zrobić.</p>
+          <p><a id="linkedin" class="btn btn-secondary" href="https://www.linkedin.com/in/bartlomiej-gornicki/" role="button">Odwiedź mnie na LinkedIn &raquo;</a></p>
+        </div>
+      </div>
+
+      <hr>
+      <script src="scripts/options.js"></script>
+      <footer>
+        <p>&copy; <a href="https://www.wykop.pl/ludzie/nicniezgrublem">@nicniezgrublem</a> 2017</p>
+      </footer>
+    </div>
+</html>
+
