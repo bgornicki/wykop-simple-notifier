@@ -14,14 +14,16 @@ function init() {
 		soundsOnlyFirst: false,
 		shouldCountHashtags: false,
 		elonizm: false,
-		openMentionsPage: false,
+		alwaysShowMainPage: false,
+		showRichNotifications: true,
 		interval: 10
 	}, function(items) {
 		document.getElementById('soundsEnabled').checked = items.soundsEnabled;
 		document.getElementById('soundsOnlyFirst').checked = items.soundsOnlyFirst;
 		document.getElementById('shouldCountHashtags').checked = items.shouldCountHashtags;
 		document.getElementById('elonizm').checked = items.elonizm;
-		document.getElementById('openMentionsPage').checked = items.openMentionsPage;
+		document.getElementById('alwaysShowMainPage').checked = items.alwaysShowMainPage;
+		document.getElementById('showRichNotifications').checked = items.showRichNotifications;
 		document.getElementById('interval').value = items.interval;
 	});
 }
@@ -37,14 +39,16 @@ function saveSettings() {
 		var soundsOnlyFirst = document.getElementById("soundsOnlyFirst").checked;
 		var shouldCountHashtags = document.getElementById("shouldCountHashtags").checked;
 		var elonizm = document.getElementById("elonizm").checked;
-		var openMentionsPage = document.getElementById("openMentionsPage").checked;
+		var alwaysShowMainPage = document.getElementById("alwaysShowMainPage").checked;
+		var showRichNotifications = document.getElementById("showRichNotifications").checked;
 
 		chrome.storage.sync.set({
 			soundsEnabled: soundsEnabled,
 			soundsOnlyFirst: soundsOnlyFirst,
 			shouldCountHashtags: shouldCountHashtags,
 			elonizm: elonizm,
-			openMentionsPage: openMentionsPage,
+			alwaysShowMainPage: alwaysShowMainPage,
+			showRichNotifications: showRichNotifications,
 			interval: interval
 		}, function() {
 			// Update status to let user know options were saved.

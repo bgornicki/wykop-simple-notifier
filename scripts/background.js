@@ -7,10 +7,11 @@ var totalNotificationCountOld = 0;
 var notificationCount = 0;
 var hashtagsCounter = 0;
 var elonizm = false;
+var showRichNotifications = true;
 
 var soundsEnabled = false;
 var soundsOnlyFirst = false;
-var openMentionsPage = false;
+var alwaysShowMainPage = false;
 var shouldCountHashtags = false;
 var interval = 10;
 
@@ -27,45 +28,47 @@ var COLOR_LOGGEDOUT = {
 	color: [135, 141, 150, 255]
 };
 
+var notificationAddress = "";
+
 window.onload = init;
+
+var notificationsShown = [];
 
 function init() {
 
-	getUserSettings();
+	getUserSettings(function () {
+		totalNotificationCount = 0;
+		totalNotificationCountOld = 0;
 
-	totalNotificationCount = 0;
-	totalNotificationCountOld = 0;
-	chrome.browserAction.setTitle({
-		title: "Simple Wykop Notifier - uruchamianie"
+		extensionSetTitle("Simple Wykop Notifier - uruchamianie");
+		extensionSetBadge(COLOR_NOT_READY, "?");
+
+		if (!chrome.browserAction.onClicked.hasListener(iconClickHandler)) {
+			chrome.browserAction.onClicked.addListener(iconClickHandler);
+		}
+
+		setTimeout(getNotifications, 1000);
 	});
-	chrome.browserAction.setBadgeBackgroundColor(COLOR_NOT_READY);
-	chrome.browserAction.setBadgeText({
-		text: "?"
-	});
-
-	if (chrome.browserAction.onClicked.hasListener(clickListener) == false) {
-		chrome.browserAction.onClicked.addListener(clickListener);
-	}
-
-	setTimeout(getNotifications, 1000);
 }
 
-function getUserSettings() {
+function getUserSettings(callback) {
 	// Use default value
 	chrome.storage.sync.get({
 		soundsEnabled: true,
 		soundsOnlyFirst: false,
-		openMentionsPage: false,
+		alwaysShowMainPage: false,
 		elonizm: false,
 		shouldCountHashtags: false,
+		showRichNotifications: true,
 		interval: 10
-	}, function(items) {
-		soundsEnabled = items.soundsEnabled;
-		soundsOnlyFirst = items.soundsOnlyFirst;
-		shouldCountHashtags = items.shouldCountHashtags;
-		elonizm = items.elonizm;
-		openMentionsPage = items.openMentionsPage;
-		interval = items.interval;
+	}, function (settings) {
+		soundsEnabled = settings.soundsEnabled;
+		soundsOnlyFirst = settings.soundsOnlyFirst;
+		shouldCountHashtags = settings.shouldCountHashtags;
+		elonizm = settings.elonizm;
+		alwaysShowMainPage = settings.alwaysShowMainPage;
+		showRichNotifications = settings.showRichNotifications;
+		interval = settings.interval;
 
 		if (interval) {
 			checkingInterval_ms = interval * 1000;
@@ -76,97 +79,90 @@ function getUserSettings() {
 		} else {
 			audio = new Audio('sounds/all-eyes-on-me.ogg');
 		}
+
+		if (callback) {
+			callback();
+		}
+
 	});
 }
 
+
 function getNotifications() {
 	var req = new XMLHttpRequest();
-	req.open('GET', 'https://www.wykop.pl', true);
-	req.onreadystatechange = function(aEvt) {
+	req.open('GET', 'https://www.wykop.pl/powiadomienia/do-mnie/', true);
+	req.timeout = 500; // time in milliseconds 
+	req.onerror = function () {
+		console.log("Error occured. Rescheduling");
+		setTimeout(getNotifications, checkingInterval_ms);
+	};
+	req.onreadystatechange = function (aEvt) {
 		if (req.readyState == 4) {
 			if (req.status == 200) {
 
-				if (req.responseText.indexOf("https://www.wykop.pl/zaloguj") < 0) {
+				if (isUserLoggedIn(req.responseText)) {
 
-					var mentionsPattern = '(id="notificationsCount">)(\\d*)(</b>)';
-					var hashtagsPattern = '(id="hashtagsNotificationsCount">)(\\d*)(</b>)';
+					totalNotificationCount = getMentionsCount(req.responseText);
+					if (shouldCountHashtags) {
+						totalNotificationCount += getHashtagsCount(req.responseText);
+					}
 
-					var mentionsQuery = new RegExp(mentionsPattern, ["i"]);
-					var hashtagsQuery = new RegExp(hashtagsPattern, ["i"]);
-
-					var mentionsResults = mentionsQuery.exec(req.responseText);
-					var hashtagsResults = hashtagsQuery.exec(req.responseText);
-
-					if (mentionsResults) {
-
-						totalNotificationCount = parseInt(mentionsResults[2]);
-						if (shouldCountHashtags) {
-							if (hashtagsResults) {
-								totalNotificationCount += parseInt(hashtagsResults[2]);
-							}
-						}
-
-						if (totalNotificationCount > totalNotificationCountOld) {
-							if (soundsEnabled) {
-								if (soundsOnlyFirst == false) {
+					if (totalNotificationCount > totalNotificationCountOld) {
+						if (soundsEnabled) {
+							if (soundsOnlyFirst == false) {
+								audio.play();
+							} else {
+								if (totalNotificationCountOld == 0) {
 									audio.play();
-								} else {
-									if (totalNotificationCountOld == 0) {
-										audio.play();
-									}
 								}
-								totalNotificationCountOld = totalNotificationCount;
 							}
-						} else {
 							totalNotificationCountOld = totalNotificationCount;
 						}
-
-						if (totalNotificationCount != 0) {
-							totalNotificationCountText = totalNotificationCount.toString();
-						} else {
-							totalNotificationCountText = "";
-						}
-
-						chrome.browserAction.setBadgeBackgroundColor(COLOR_NEW_NOTIFICATION);
-						chrome.browserAction.setBadgeText({
-							text: totalNotificationCountText
-						});
-
-						if (hashtagsResults && mentionsResults) {
-							chrome.browserAction.setTitle({
-								title: "Wykop - zalogowany:\n " + mentionsResults[2] + " powiadomien\n " + hashtagsResults[2] + " tagow"
-							});
-
-						}
-
 					} else {
-						chrome.browserAction.setTitle({
-							title: "Wykop - niezalogowany"
-						});
-						chrome.browserAction.setBadgeBackgroundColor(COLOR_ERROR);
-						chrome.browserAction.setBadgeText({
-							text: "?"
-						});
+						totalNotificationCountOld = totalNotificationCount;
+					}
+
+					if (totalNotificationCount != 0) {
+						notificationCountString = totalNotificationCount.toString();
+					} else {
+						notificationCountString = "";
+					}
+
+					extensionSetBadge(COLOR_NEW_NOTIFICATION, notificationCountString);
+					extensionSetTitle("Wykop - zalogowany: \n " + getMentionsCount(req.responseText) + " powiadomien\n " + getHashtagsCount(req.responseText) + " tagow");
+
+					if(totalNotificationCount != 0) {
+						var parser = new DOMParser();
+						var responseDoc = parser.parseFromString(req.responseText, "text/html");
+						var notificationList = responseDoc.getElementsByClassName("menu-list notification");
+						
+						if(notificationList.length > 0) {
+							var notifications = notificationList[0].getElementsByTagName("li");
+							for (var i = 0; i < notifications.length; ++i) {
+								if (notifications[i].classList.contains('type-light-warning')) {
+									collapse(notifications[i]);
+									var links = notifications[i].getElementsByTagName("a");
+									if (links.length > 0) {
+										notificationAddress = links[links.length-1].href;
+									}									
+									
+									if (showRichNotifications) {
+										if (!wasRichNotificationShown(notificationAddress)) {
+											showRichNotification(notifications[i].innerText.trim(), notificationAddress);
+										}
+									}
+									
+								}
+							}
+						}				
+					} else {
+						notificationsShown = [];
 					}
 				} else {
-					chrome.browserAction.setTitle({
-						title: "Wykop - niezalogowany"
-					});
-					chrome.browserAction.setBadgeBackgroundColor(COLOR_LOGGEDOUT);
-					chrome.browserAction.setBadgeText({
-						text: "??"
-					});
+					extensionShowError("?");
 				}
-
 				setTimeout(getNotifications, checkingInterval_ms);
-
 			} else {
-				chrome.browserAction.setTitle({
-					title: "Wykop - niezalogowany"
-				});
-				chrome.browserAction.setBadgeText({
-					text: "???"
-				});
 				setTimeout(getNotifications, checkingInterval_ms);
 			}
 		}
@@ -174,24 +170,77 @@ function getNotifications() {
 	req.send(null);
 }
 
-function clickListener(tab) {
+function iconClickHandler(tab) {
 	iconClickReport();
-	if (openMentionsPage) {
-		chrome.tabs.create({
-			url: "https://www.wykop.pl/powiadomienia/do-mnie"
-		});
+	if (alwaysShowMainPage) {
+		openNewChromeTab("https://www.wykop.pl");
+	} else if(totalNotificationCount == 0) {
+		openNewChromeTab("https://www.wykop.pl");
+	} else if (totalNotificationCount == 1) {
+		if ( (notificationAddress != null) && (notificationAddress != "") ) {
+			openNewChromeTab(notificationAddress);
+		}
 	} else {
-		chrome.tabs.create({
-			url: "https://www.wykop.pl"
-		});
+		openNewChromeTab("https://www.wykop.pl/powiadomienia/do-mnie");
 	}
+}
+
+function extensionShowError(text) {
+	extensionSetTitle("Wykop - niezalogowany");
+	extensionSetBadge(COLOR_ERROR, "??");
+}
+
+function openNewChromeTab(address) {
+	chrome.tabs.create({
+		url: address
+	});
+}
+function extensionSetTitle(text) {
+	chrome.browserAction.setTitle({
+		title: text
+	});
+}
+
+function extensionSetBadge(color, text) {
+	chrome.browserAction.setBadgeBackgroundColor(color);
+	chrome.browserAction.setBadgeText({
+		text: text
+	});
+}
+
+function isUserLoggedIn(respose) {
+	return (respose.indexOf("https://www.wykop.pl/zaloguj") < 0)
+}
+
+function getMentionsCount(response) {
+	var mentionsPattern = '(id="notificationsCount">)(\\d*)(</b>)';
+	var mentionsQuery = new RegExp(mentionsPattern, ["i"]);
+	var mentionsResults = mentionsQuery.exec(response);
+	if (mentionsResults) {
+		return parseInt(mentionsResults[2]);
+	} else {
+		return -1;
+	}
+}
+
+function getHashtagsCount(response) {
+	var hashtagsPattern = '(id="hashtagsNotificationsCount">)(\\d*)(</b>)';
+	var hashtagsQuery = new RegExp(hashtagsPattern, ["i"]);
+
+	var hashtagsResults = hashtagsQuery.exec(response);
+	if (hashtagsResults) {
+		return parseInt(hashtagsResults[2]);
+	} else {
+		return -1;
+	}
+
 }
 
 var _gaq = _gaq || [];
 _gaq.push(['_setAccount', 'UA-108401299-2']);
 _gaq.push(['_trackPageview']);
 
-(function() {
+(function () {
 	var ga = document.createElement('script');
 	ga.type = 'text/javascript';
 	ga.async = true;
@@ -202,4 +251,49 @@ _gaq.push(['_trackPageview']);
 
 function iconClickReport() {
 	_gaq.push(['_trackEvent', 'Icon', 'clicked']);
+}
+
+function showRichNotification(text, link) {
+	
+	notificationsShown.push(link);
+
+	var options = {
+		icon: "../img/icon128.png",
+		body: text
+	}
+
+	var notification = new Notification("Wykop.pl", options);
+
+	notification.onclick = function () {
+
+		deleteNotificationInfo(link);
+
+		window.focus();
+		chrome.tabs.create({
+			url: link
+		});
+		notification.close();
+	};
+}
+
+function wasRichNotificationShown(link) {
+	var wasShown = false;
+	
+	for (let index = 0; index < notificationsShown.length; index++) {
+		const element = notificationsShown[index];
+		if(element == link) {
+			wasShown = true;
+		}
+	}
+
+	return wasShown;
+}
+
+function deleteNotificationInfo(link) {
+	for (let i = 0; i < notificationsShown.length; i++) {
+		const element = notificationsShown[i];
+		if(element == link) {
+			notificationsShown.splice(i, 1);
+		}
+	}
 }
