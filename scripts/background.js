@@ -88,9 +88,13 @@ function getUserSettings(callback) {
 }
 
 
+function isNotificationFromTag(notificationObject) {
+	return ( (notificationObject.outerHTML.indexOf("użył tagu") > 0) || (notificationObject.outerHTML.indexOf("użyła tagu") > 0) );
+}
+
 function getNotifications() {
 	var req = new XMLHttpRequest();
-	req.open('GET', 'https://www.wykop.pl/powiadomienia/do-mnie/', true);
+	req.open('GET', 'https://www.wykop.pl/powiadomienia/', true);
 	req.timeout = 500; // time in milliseconds 
 	req.onerror = function () {
 		console.log("Error occured. Rescheduling");
@@ -139,7 +143,8 @@ function getNotifications() {
 						if(notificationList.length > 0) {
 							var notifications = notificationList[0].getElementsByTagName("li");
 							for (var i = 0; i < notifications.length; ++i) {
-								if (notifications[i].classList.contains('type-light-warning')) {
+
+								if ( (notifications[i].classList.contains('type-light-warning')) && (!isNotificationFromTag(notifications[i])) ) {
 									collapse(notifications[i]);
 									var links = notifications[i].getElementsByTagName("a");
 									if (links.length > 0) {
@@ -179,9 +184,11 @@ function iconClickHandler(tab) {
 	} else if (totalNotificationCount == 1) {
 		if ( (notificationAddress != null) && (notificationAddress != "") ) {
 			openNewChromeTab(notificationAddress);
+		} else {
+			openNewChromeTab("https://www.wykop.pl");
 		}
 	} else {
-		openNewChromeTab("https://www.wykop.pl/powiadomienia/do-mnie");
+		openNewChromeTab("https://www.wykop.pl/powiadomienia");
 	}
 }
 
@@ -213,14 +220,21 @@ function isUserLoggedIn(respose) {
 }
 
 function getMentionsCount(response) {
+	var counter = 0;
 	var mentionsPattern = '(id="notificationsCount">)(\\d*)(</b>)';
+	var bellPattern = '(id="pmNotificationsCount">)(\\d*)(</b>)';
 	var mentionsQuery = new RegExp(mentionsPattern, ["i"]);
+	var bellQuery = new RegExp(bellPattern, ["i"]);
+	
 	var mentionsResults = mentionsQuery.exec(response);
+	var bellResults = bellQuery.exec(response);
 	if (mentionsResults) {
-		return parseInt(mentionsResults[2]);
-	} else {
-		return -1;
+		counter += parseInt(mentionsResults[2]);
 	}
+	if (bellResults) {
+			counter += parseInt(bellResults[2]);
+	}
+	return counter;
 }
 
 function getHashtagsCount(response) {
