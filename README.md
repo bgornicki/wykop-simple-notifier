@@ -1,7 +1,7 @@
 # Wykop Simple Notifier
 Dodatek, który pozwolić być Ci na bieżąco z powiadomieniami na wykopie. Nie musisz się nigdzie rejestrować ani kombinować z API.
 
-Wykop Simple Notifier co ustalony czas sprawdza stronę wykop.pl pod katem nowych powiadomień i jeśli się jakieś pojawi, poinformuje Cię o tym dźwiękowo (można oczywiście wyłączyć te opcję) oraz wyświetli liczbę powiadomień na ikonie rozszerzenia.
+Wykop Simple Notifier co ustalony czas sprawdza stronę wykop.pl pod kątem nowych powiadomień i jeśli się jakieś pojawi, poinformuje Cię o tym dźwiękowo (można oczywiście wyłączyć te opcję) oraz wyświetli liczbę powiadomień na ikonie rozszerzenia.
 
 ## Jak to działa?
 
