@@ -1,3 +1,13 @@
+let settings = {
+	soundsEnabled: true,
+	soundsOnlyFirst: false,
+	alwaysShowMainPage: false,
+	elonizm: false,
+	shouldCountHashtags: false,
+	showRichNotifications: false,
+	interval: 10
+}
+
 function init() {
 	
 	// enable tooltips on all elements
@@ -6,18 +16,10 @@ function init() {
 	});
 
 	document.getElementById('save').addEventListener('click', saveSettings);
-	document.getElementById('linkedin').addEventListener('click', linkedInClick);
+	document.getElementById('showRichNotifications').addEventListener('click', askForPermissionsIfNecessary);
 
 	// Read settings or Use default value in case of error
-	chrome.storage.sync.get({
-		soundsEnabled: true,
-		soundsOnlyFirst: false,
-		shouldCountHashtags: false,
-		elonizm: false,
-		alwaysShowMainPage: false,
-		showRichNotifications: true,
-		interval: 10
-	}, function(items) {
+	chrome.storage.sync.get(settings, function(items) {
 		document.getElementById('soundsEnabled').checked = items.soundsEnabled;
 		document.getElementById('soundsOnlyFirst').checked = items.soundsOnlyFirst;
 		document.getElementById('shouldCountHashtags').checked = items.shouldCountHashtags;
@@ -26,6 +28,29 @@ function init() {
 		document.getElementById('showRichNotifications').checked = items.showRichNotifications;
 		document.getElementById('interval').value = items.interval;
 	});
+}
+
+function askForPermissionsIfNecessary() {
+
+	var checkBox = document.getElementById("showRichNotifications");
+	if (checkBox.checked == true) {
+		if (!("Notification" in window)) {
+			console.log("Twoja przeglądarka nie wspiera powiadomień");
+		}
+
+		else if ((Notification.permission !== "granted" && Notification.permission !== 'denied') || Notification.permission === "default") {
+			Notification.requestPermission(function (permission) {
+				if (permission === "granted") {
+					var options = {
+						icon: "../img/icon128.png",
+						body: "Super, od teraz będziesz mógł korzystać z powiadomień!"
+					}
+
+					var notification = new Notification("Wykop.pl", options);
+				}
+			});
+		}
+	}
 }
 
 function saveSettings() {
@@ -51,6 +76,7 @@ function saveSettings() {
 			showRichNotifications: showRichNotifications,
 			interval: interval
 		}, function() {
+			
 			// Update status to let user know options were saved.
 			intervalElement.classList.remove("is-invalid");
 			var status = document.getElementById('status');
@@ -67,19 +93,5 @@ function saveSettings() {
 		intervalElement.classList.add("is-invalid");
 	}
 }
-
-function linkedInClick() {
-	_gaq.push(['_trackEvent', 'LinkedInButton', 'clicked']);
-}
-
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-108401299-2']);
-_gaq.push(['_trackPageview']);
-
-(function() {
-  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-  ga.src = 'https://ssl.google-analytics.com/ga.js';
-  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
 
 document.addEventListener('DOMContentLoaded', init);

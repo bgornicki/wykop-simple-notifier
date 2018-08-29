@@ -1,21 +1,22 @@
+let settings = {
+	soundsEnabled: true,
+	soundsOnlyFirst: false,
+	alwaysShowMainPage: false,
+	elonizm: false,
+	shouldCountHashtags: false,
+	showRichNotifications: false,
+	interval: 10
+}
+
 var checkingInterval_ms = 10000;
-
 var audio = null;
-
 var totalNotificationCount = 0;
 var totalNotificationCountOld = 0;
 var notificationCount = 0;
 var hashtagsCounter = 0;
-var elonizm = false;
-var showRichNotifications = true;
-
-var soundsEnabled = false;
-var soundsOnlyFirst = false;
-var alwaysShowMainPage = false;
-var shouldCountHashtags = false;
-var interval = 10;
-
 let intervalHandler = null;
+var notificationAddress = "";
+var notificationsShown = [];
 
 var COLOR_NEW_NOTIFICATION = {
 	color: [204, 0, 51, 255]
@@ -30,11 +31,7 @@ var COLOR_LOGGEDOUT = {
 	color: [135, 141, 150, 255]
 };
 
-var notificationAddress = "";
-
 window.onload = init;
-
-var notificationsShown = [];
 
 function init() {
 
@@ -55,29 +52,16 @@ function init() {
 }
 
 function getUserSettings(callback) {
-	// Use default value
-	chrome.storage.sync.get({
-		soundsEnabled: true,
-		soundsOnlyFirst: false,
-		alwaysShowMainPage: false,
-		elonizm: false,
-		shouldCountHashtags: false,
-		showRichNotifications: true,
-		interval: 10
-	}, function (settings) {
-		soundsEnabled = settings.soundsEnabled;
-		soundsOnlyFirst = settings.soundsOnlyFirst;
-		shouldCountHashtags = settings.shouldCountHashtags;
-		elonizm = settings.elonizm;
-		alwaysShowMainPage = settings.alwaysShowMainPage;
-		showRichNotifications = settings.showRichNotifications;
-		interval = settings.interval;
 
-		if (interval) {
-			checkingInterval_ms = interval * 1000;
+	chrome.storage.sync.get(settings, function (readSettings) {
+		
+		settings = readSettings;
+		
+		if (settings.interval) {
+			checkingInterval_ms = settings.interval * 1000;
 		}
 
-		if (elonizm) {
+		if (settings.elonizm) {
 			audio = new Audio('sounds/elon.ogg');
 		} else {
 			audio = new Audio('sounds/all-eyes-on-me.ogg');
@@ -105,13 +89,13 @@ function getNotifications() {
 			if (isUserLoggedIn(req.responseText)) {
 
 				totalNotificationCount = getMentionsCount(req.responseText);
-				if (shouldCountHashtags) {
+				if (settings.shouldCountHashtags) {
 					totalNotificationCount += getHashtagsCount(req.responseText);
 				}
 
 				if (totalNotificationCount > totalNotificationCountOld) {
-					if (soundsEnabled) {
-						if (soundsOnlyFirst == false) {
+					if (settings.soundsEnabled) {
+						if (settings.soundsOnlyFirst == false) {
 							audio.play();
 						} else {
 							if (totalNotificationCountOld == 0) {
@@ -146,12 +130,12 @@ function getNotifications() {
 								collapse(notifications[i]);
 								var links = notifications[i].getElementsByTagName("a");
 								if (links.length > 0) {
-									notificationAddress = links[links.length - 1].href;
+									urlToOpenOnClick = links[links.length - 1].href;
 								}
 
-								if (showRichNotifications) {
-									if (!wasRichNotificationShown(notificationAddress)) {
-										showRichNotification(notifications[i].innerText.trim(), notificationAddress);
+								if (settings.showRichNotifications) {
+									if (!wasRichNotificationShown(urlToOpenOnClick)) {
+										showRichNotification(notifications[i].innerText.trim(), urlToOpenOnClick);
 									}
 								}
 
@@ -173,8 +157,8 @@ function getNotifications() {
 }
 
 function iconClickHandler(tab) {
-	iconClickReport();
-	if (alwaysShowMainPage) {
+	
+	if (settings.alwaysShowMainPage) {
 		openNewChromeTab("https://www.wykop.pl");
 	} else if (totalNotificationCount == 0) {
 		openNewChromeTab("https://www.wykop.pl");
@@ -245,23 +229,6 @@ function getHashtagsCount(response) {
 		return -1;
 	}
 
-}
-
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-108401299-2']);
-_gaq.push(['_trackPageview']);
-
-(function () {
-	var ga = document.createElement('script');
-	ga.type = 'text/javascript';
-	ga.async = true;
-	ga.src = 'https://ssl.google-analytics.com/ga.js';
-	var s = document.getElementsByTagName('script')[0];
-	s.parentNode.insertBefore(ga, s);
-})();
-
-function iconClickReport() {
-	_gaq.push(['_trackEvent', 'Icon', 'clicked']);
 }
 
 function showRichNotification(text, link) {

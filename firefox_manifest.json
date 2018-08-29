@@ -15,7 +15,15 @@
     "48": "img/icon48.png",
     "128": "img/icon128.png"
   },
-  "options_page": "options.html",
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": false
+  },
+  "applications": {
+    "gecko": {
+      "id": "simplenotifier@wykop.pl"
+    }
+  },
   "permissions": [
     "https://www.wykop.pl/",
     "webRequest",
