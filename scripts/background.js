@@ -15,7 +15,7 @@ var totalNotificationCountOld = 0;
 var notificationCount = 0;
 var hashtagsCounter = 0;
 let intervalHandler = null;
-var notificationAddress = "";
+var urlToOpenOnClick = "";
 var notificationsShown = [];
 
 var COLOR_NEW_NOTIFICATION = {
@@ -163,8 +163,8 @@ function iconClickHandler(tab) {
 	} else if (totalNotificationCount == 0) {
 		openNewChromeTab("https://www.wykop.pl");
 	} else if (totalNotificationCount == 1) {
-		if ((notificationAddress != null) && (notificationAddress != "")) {
-			openNewChromeTab(notificationAddress);
+		if ((urlToOpenOnClick != null) && (urlToOpenOnClick != "")) {
+			openNewChromeTab(urlToOpenOnClick);
 		} else {
 			openNewChromeTab("https://www.wykop.pl");
 		}
